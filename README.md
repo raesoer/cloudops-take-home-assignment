@@ -10,8 +10,7 @@ Duration: A week
 If you have questions at any point of the project feel free to email Masur, mho@copperleaf.com.
 
 ## Instructions and submission
-Please make a copy (clone) of the project into your github account.
-
+Please make fork of the project into your github account.
 Once you are ready to submit, send URL of the public repository in your account to Copperleaf Recruiter you have been working with.
 
 ## Objectives

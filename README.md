@@ -1,5 +1,5 @@
 # CloudOps Take Home Assignment
-This is a public repo that contains a take-home assignment for prospective CloudOps positions. Start by forking this repo and create a pull request when you are ready to present your solution!
+This is a public repo that contains a take-home assignment for prospective CloudOps positions. Start by forking this repo and create a pull request to your forked repo when you are ready to present your solution!
 
 This take home assignment presents a real-world challenge that is to be solved as part of the interview process.
 
@@ -7,11 +7,11 @@ While working on this exercise, keep in mind that it is more important to show h
 
 Duration: A week
 
-If you have questions at any point of the project feel free to email Masur, mho@copperleaf.com.
+If you have questions at any point of the project feel free to email James Holzbecher at jholzbecher@copperleaf.com.
 
 ## Instructions and submission
-Please make fork of the project into your github account.
-Once you are ready to submit, send URL of the public repository in your account to Copperleaf Recruiter you have been working with.
+Please make fork of the project into your GitHub account.
+Once you are ready to submit, send URL of the public repository in your account to the Copperleaf Recruiter you have been working with.
 
 ## Objectives
 To demonstrate knowledge of **automation and deployment technologies, tools, security, network planning, logging, metrics, monitor and any additional processes you can think of.**
@@ -45,4 +45,4 @@ We use Ansible extensively to perform various automation: (https://www.ansible.c
 We work as a team and are happy to answer any questions that may arise during this assignment. Whether it's clarification of the objectives or specific tools and technologies that could be used, please reach out to the contact that was provided to you when we gave you this assignment.
 
 ## Copyright / Disclaimer
-© 2021 Copperleaf Technologies Inc. COPPERLEAF, the COPPERLEAF logo, COPPERLEAF PORTFOLIO, COPPERLEAF ASSET, and COPPERLEAF VALUE are trademarks of Copperleaf Technologies Inc. COPPERLEAF is a registered trademark in Canada, the U.S., the E.U., and other countries. The COPPERLEAF logo is a registered trademark in Canada, the U.S., and the E.U. All rights reserved.
+© 2024 Copperleaf Technologies Inc. COPPERLEAF, the COPPERLEAF logo, COPPERLEAF PORTFOLIO, COPPERLEAF ASSET, and COPPERLEAF VALUE are trademarks of Copperleaf Technologies Inc. COPPERLEAF is a registered trademark in Canada, the U.S., the E.U., and other countries. The COPPERLEAF logo is a registered trademark in Canada, the U.S., and the E.U. All rights reserved.

@@ -1,0 +1,199 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 
+  My first CloudFormation template. Sample stitched together from examples on web.
+  So it is quite simple. A VPC and an EC2 instance. 
+
+Parameters:
+  # CIDR of VPC
+  NetworkCIDR:
+    Description: CIDR of the new VPC
+    Type: String
+    Default: 10.0.0.0/16
+    
+  # AZ Name where subnet will be created
+  AvailabilityZoneName:
+    Description: CIDR of the new VPC
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-1
+    
+  # CIDR of new subnet within this VPC
+  SubnetCIDR:
+    Description: CIDR of the new subnet within this VPC
+    Type: String
+    Default: 10.0.1.0/24 
+    
+Resources:
+  # create VPC
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: !Ref NetworkCIDR
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+      InstanceTenancy: default
+      Tags: 
+       - Key: Name
+         Value: demo-vpc
+       - Key: Application
+         Value: !Ref 'AWS::StackName'
+  
+  # create Internet Gateway
+  MyIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags: 
+       - Key: Name
+         Value: demo-igw
+       - Key: Application
+         Value: !Ref 'AWS::StackName'           
+  
+  # attaching the IGW to my VPC
+  vpcToIgw:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyIGW
+
+  # create a custom route table for demo vpc
+  MyRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags: 
+       - Key: Name
+         Value: demo-public-route-table
+       - Key: Application
+         Value: !Ref 'AWS::StackName'
+  
+  # Add routes entries for public network through igw
+  MyRoutes:
+    Type: AWS::EC2::Route    
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref MyIGW      
+  
+  # NACL
+  MyPublicNACL:
+    Type: 'AWS::EC2::NetworkAcl'
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: demo-vpc-nacl
+        - Key: Application
+          Value: !Ref 'AWS::StackName'        
+          
+  # Allow all Incoming TCP traffic
+  MyNaclRulesForInboundTCP:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref MyPublicNACL
+      RuleNumber: '100'
+      Protocol: '6'  # tcp
+      RuleAction: allow
+      Egress: 'false'  # this rule applies to ingress traffic to the subnet
+      CidrBlock: 0.0.0.0/0  # any ip address
+      PortRange:
+        From: '0'
+        To: '65535'
+          
+  # Allow all Outgoing TCP traffic
+  MyNaclRulesForOutboundTCP:
+    Type: 'AWS::EC2::NetworkAclEntry'
+    Properties:
+      NetworkAclId: !Ref MyPublicNACL
+      RuleNumber: '100'
+      Protocol: '6'  # tcp
+      RuleAction: allow
+      Egress: 'true'  # this rule applies to egress traffic from the subnet
+      CidrBlock: 0.0.0.0/0
+      PortRange:
+        From: '0'  # client will be using ephemeral port, using 80 or 22 here will not work
+        To: '65535'
+                
+  # creating a public subnet
+  MyPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      VpcId: !Ref MyVPC
+      AvailabilityZone: !Ref AvailabilityZoneName
+      CidrBlock: !Ref SubnetCIDR
+      MapPublicIpOnLaunch: true
+      Tags: 
+      - Key: Name
+        Value: 
+          !Join 
+          - ''
+          - - 'public-subnet-'
+            - !Ref AvailabilityZoneName
+      - Key: Application
+        Value: !Ref 'AWS::StackName'
+  
+  # asscoiate subnet with our route table else by default it is asscoiated with main route table
+  MySubnetRouteTableAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet
+      RouteTableId: !Ref MyRouteTable
+      
+  # associate subnet with NACL else by default it is asscoiated with main NACLs
+  MySubnetNaclAssociation:
+    Type: 'AWS::EC2::SubnetNetworkAclAssociation'
+    Properties:
+      SubnetId: !Ref MyPublicSubnet
+      NetworkAclId: !Ref MyPublicNACL
+
+  # security group
+  MySecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for SSH and HTTP
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0" # Allow SSH from your specific IP
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0" # Allow HTTP from any IP
+
+  # ec2 instance
+  MyEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      ImageId: "ami-0230bd60aa48260c6" # Default AMI ID
+      InstanceType: "t2.micro" # Default instance type
+      SubnetId: !Ref MyPublicSubnet
+      KeyName: "copperleaf"
+      SecurityGroupIds:
+        - !GetAtt MySecurityGroup.GroupId
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          wget -O /var/www/html/index.html https://raw.githubusercontent.com/raesoer/cloudops-take-home-assignment/main/default.htm
+          wget -O /var/www/html/logo.jpg https://raw.githubusercontent.com/raesoer/cloudops-take-home-assignment/main/logo.jpg
+          chmod 755 /var/www/html # the chmod mode
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+
+# output key resources ids and export the values for cross-stack referencing
+Outputs:
+  VpcID:
+    Description: ID of the newly created VPC
+    Value: !Ref MyVPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID" # the name for cross referencing
+    
+  PublicSubnetID:
+    Description: SubnetId of the public subnet
+    Value: !Ref MyPublicSubnet
+    Export:
+      Name: !Sub "${AWS::StackName}-SUBNET"
